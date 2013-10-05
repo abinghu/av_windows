@@ -1,7 +1,17 @@
-#include<stdio.h>
+#include <stdio.h>
+#include <iostream>
 #include<windows.h>
+
+using namespace std;
+
 int main(int argc,char *argv[])
 {
+	if (argc != 2)
+	{
+		cout << "usage:\n \tav_time.exe application_name\n";
+		return 0;
+	}
+
     SYSTEMTIME time1,time2;   //进程开始和结束时间 
     STARTUPINFO si = { sizeof(si) };     //指定新进程的主窗口特性 
     PROCESS_INFORMATION pi;   //返回有关新进程及其主线程信息 
@@ -23,14 +33,19 @@ int main(int argc,char *argv[])
     if(!bCreateOK)  //创建进程失败 
     {
         printf("create process fail!\n");
+		return 0;
     } 
     else
         WaitForSingleObject(pi.hProcess,INFINITE);  //等待子进程运行结束 
-    GetSystemTime(&time2);  //获得子进程结束时间 
-    printf("进程开始时间：");
-    printf("%d.%d.%d %d:%d:%d:%d\n",time1.wYear,time1.wMonth,time1.wDay,time1.wHour,time1.wMinute,time1.wSecond,time1.wMilliseconds);
-    printf("进程结束时间：");
-    printf("%d.%d.%d %d:%d:%d:%d\n",time2.wYear,time2.wMonth,time2.wDay,time2.wHour,time2.wMinute,time2.wSecond,time2.wMilliseconds);
-    printf("进程运行时间："); 
-    printf("%d:%d:%d:%d\n",time2.wHour-time1.wHour,time2.wMinute-time1.wMinute,time2.wSecond-time1.wSecond,time2.wMilliseconds-time1.wMilliseconds);
+
+	// 计算进程运行时间
+	FILETIME creationTime;// 100 纳秒为精度
+	FILETIME exitTime;
+	FILETIME kernelTime;
+	FILETIME userTime;
+	GetProcessTimes(pi.hProcess, &creationTime, &exitTime, &kernelTime, &userTime);
+	cout << "real time: " << exitTime.dwHighDateTime-creationTime.dwHighDateTime 
+		<< (exitTime.dwLowDateTime-creationTime.dwLowDateTime)*0.0001f << "ms\n"
+		<< "user time: " << userTime.dwHighDateTime << userTime.dwLowDateTime*0.0001f << "ms\n"
+		<< "kernel time: " << kernelTime.dwHighDateTime << kernelTime.dwLowDateTime*0.0001f << "ms\n";
 }
